@@ -8,6 +8,8 @@ router.get("/allUser", controller.getAllUsers);
 router.delete('/deleteUser/:id', controller.deleteUser);
 router.put("/updateUser/:id", controller.updateUser);
 router.get("/totalUser", controller.totalUsers);
+router.post("/gallery", controller.galleryUpload)
+router.get("/getAllPhoto", controller.getAllGalleryPhoto)
 
 
 

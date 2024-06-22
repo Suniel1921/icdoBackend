@@ -133,15 +133,13 @@
 
 
 
-
-
-
-
 const fileUploadModal = require("../model/fileUploadModel");
+const galleryUploadModal = require("../model/galleryModel");
 const cloudinary = require("cloudinary").v2;
 
+const supportedTypes = ['jpg', 'jpeg', 'png'];
+
 async function isFileSupported(type) {
-    const supportedTypes = ['jpg', 'jpeg', 'png'];
     return supportedTypes.includes(type);
 }
 
@@ -153,41 +151,38 @@ async function uploadFileToCloudinary(file, folder, quality) {
     return await cloudinary.uploader.upload(file.tempFilePath, options);
 }
 
-
-
 exports.imageUpload = async (req, res) => {
     try {
-      const { name, position , gender} = req.body;
-      const file = req.files && req.files.image ? req.files.image : null;
-  
-      if (!file) {
-        return res.status(400).json({ success: false, message: "No file uploaded" });
-      }
-  
-      const fileType = file.name.split('.').pop().toLowerCase();
-      if (!(await isFileSupported(fileType))) {
-        return res.status(400).json({ success: false, message: 'File format is not supported' });
-      }
-  
-      const response = await uploadFileToCloudinary(file, 'userImage', 30);
-      if (!response.secure_url) {
-        return res.status(500).json({ success: false, message: "Failed to upload image" });
-      }
-  
-      const fileData = await fileUploadModal.create({ name, position, gender, image: response.secure_url });
-  
-      return res.status(201).json({ success: true, message: 'User created successfully', fileData });
+        const { name, position, gender,stafforBoardMember } = req.body;
+        const file = req.files && req.files.image ? req.files.image : null;
+
+        if (!file) {
+            return res.status(400).json({ success: false, message: "No file uploaded" });
+        }
+
+        const fileType = file.name.split('.').pop().toLowerCase();
+        if (!isFileSupported(fileType)) {
+            return res.status(400).json({ success: false, message: 'File format is not supported' });
+        }
+
+        const response = await uploadFileToCloudinary(file, 'userImage', 30);
+        if (!response.secure_url) {
+            return res.status(500).json({ success: false, message: "Failed to upload image" });
+        }
+
+        const fileData = await fileUploadModal.create({ name, position, gender,stafforBoardMember, image: response.secure_url });
+
+        return res.status(201).json({ success: true, message: 'User created successfully', fileData });
     } catch (error) {
-      console.error("Error while uploading file:", error);
-      return res.status(500).json({ success: false, message: `Error while uploading file: ${error.message}` });
+        console.error("Error while uploading file:", error);
+        return res.status(500).json({ success: false, message: `Error while uploading file: ${error.message}` });
     }
-  };
-  
+};
 
 exports.getAllUsers = async (req, res) => {
     try {
         const allUsers = await fileUploadModal.find({});
-        if (allUsers.length === 0) {
+        if (!allUsers.length) {
             return res.status(404).json({ success: false, message: "No users found" });
         }
         return res.status(200).json({ success: true, message: "Users found", users: allUsers });
@@ -195,7 +190,7 @@ exports.getAllUsers = async (req, res) => {
         console.error("Error fetching users:", error);
         return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
-}
+};
 
 exports.updateUser = async (req, res) => {
     try {
@@ -203,13 +198,11 @@ exports.updateUser = async (req, res) => {
         const { name, position } = req.body;
         const file = req.files && req.files.image ? req.files.image : null;
 
-        // Update name and position
         const updateFields = { name, position };
 
-        // If there's a file, update image
         if (file) {
             const fileType = file.name.split('.').pop().toLowerCase();
-            if (!(await isFileSupported(fileType))) {
+            if (!isFileSupported(fileType)) {
                 return res.status(400).json({ success: false, message: 'File format is not supported' });
             }
             const result = await uploadFileToCloudinary(file, 'userImage', 30);
@@ -219,11 +212,7 @@ exports.updateUser = async (req, res) => {
             updateFields.image = result.secure_url;
         }
 
-        const updatedUser = await fileUploadModal.findByIdAndUpdate(
-            id,
-            updateFields,
-            { new: true }
-        );
+        const updatedUser = await fileUploadModal.findByIdAndUpdate(id, updateFields, { new: true });
 
         if (!updatedUser) {
             return res.status(404).json({ success: false, message: "User not found" });
@@ -236,8 +225,6 @@ exports.updateUser = async (req, res) => {
     }
 };
 
-
-
 exports.deleteUser = async (req, res) => {
     try {
         const { id } = req.params;
@@ -248,21 +235,67 @@ exports.deleteUser = async (req, res) => {
         return res.status(200).json({ success: true, message: 'User deleted successfully' });
     } catch (error) {
         console.error("Error deleting user:", error);
-        return res.status(500).json({ success: false, message: `Internal server error: ${error.message}` });
+        return res.status (500).json({ success: false, message: `Internal server error: ${error.message}` });
     }
-}
+};
 
-
-
-
-
-//total users
 exports.totalUsers = async (req, res) => {
     try {
-      const totalUsers = await fileUploadModal.countDocuments();
-      res.status(200).json({ success: true, message: "Total users fetched successfully", count: totalUsers });
+        const totalUsers = await fileUploadModal.countDocuments();
+        res.status(200).json({ success: true, message: "Total users fetched successfully", count: totalUsers });
     } catch (error) {
-      console.error('Error fetching total users:', error);
-      res.status(500).json({ success: false, message: "Internal Server Error." });
+        console.error('Error fetching total users:', error);
+        res.status(500).json({ success: false, message: "Internal Server Error." });
     }
-  };
+};
+
+
+
+
+
+// *************************gallery photo uploader**********************************
+
+exports.galleryUpload = async (req, res) => {
+    try {
+        const file = req.files && req.files.image ? req.files.image : null;
+
+        if (!file) {
+            return res.status(400).json({ success: false, message: "No file uploaded" });
+        }
+
+        const fileType = file.name.split('.').pop().toLowerCase();
+        if (!isFileSupported(fileType)) {
+            return res.status(400).json({ success: false, message: 'File format is not supported' });
+        }
+
+        const response = await uploadFileToCloudinary(file, 'userImage', 30);
+        if (!response.secure_url) {
+            return res.status(500).json({ success: false, message: "Failed to upload image" });
+        }
+
+        const fileData = await galleryUploadModal.create({ image: response.secure_url });
+
+        return res.status(201).json({ success: true, message: 'Image uploaded successfully', fileData });
+    } catch (error) {
+        console.error("Error while uploading file:", error);
+        return res.status(500).json({ success: false, message: `Error while uploading file: ${error.message}` });
+    }
+};
+
+
+
+
+
+
+exports.getAllGalleryPhoto = async (req, res) => {
+    try {
+        const allPhoto = await galleryUploadModal.find({});
+        if (!allPhoto.length) {
+            return res.status(404).json({ success: false, message: "No users found" });
+        }
+        return res.status(200).json({ success: true, message: "Users found", allPhoto });
+    } catch (error) {
+        console.error("Error fetching users:", error);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};

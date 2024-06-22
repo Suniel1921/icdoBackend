@@ -15,8 +15,17 @@ const fileUploadSchema = new mongoose.Schema({
     },
     image:{
         type: String,
-    }
+    },
+    stafforBoardMember:{
+        type: String,
+        required: true,
+    },
 },{timestamps: true})
 
 const fileUploadModal = mongoose.model('fileUploadModel', fileUploadSchema);
 module.exports = fileUploadModal;
+
+
+
+
+
