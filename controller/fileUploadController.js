@@ -133,6 +133,7 @@
 
 
 
+const announceUploadModal = require("../model/announceModel");
 const fileUploadModal = require("../model/fileUploadModel");
 const galleryUploadModal = require("../model/galleryModel");
 const cloudinary = require("cloudinary").v2;
@@ -257,6 +258,7 @@ exports.totalUsers = async (req, res) => {
 
 exports.galleryUpload = async (req, res) => {
     try {
+        
         const file = req.files && req.files.image ? req.files.image : null;
 
         if (!file) {
@@ -273,9 +275,9 @@ exports.galleryUpload = async (req, res) => {
             return res.status(500).json({ success: false, message: "Failed to upload image" });
         }
 
-        const fileData = await galleryUploadModal.create({ image: response.secure_url });
+        const fileData = await galleryUploadModal.create({image: response.secure_url });
 
-        return res.status(201).json({ success: true, message: 'Image uploaded successfully', fileData });
+        return res.status(201).json({ success: true, message: 'image uploaded successfully', fileData });
     } catch (error) {
         console.error("Error while uploading file:", error);
         return res.status(500).json({ success: false, message: `Error while uploading file: ${error.message}` });
@@ -294,6 +296,64 @@ exports.getAllGalleryPhoto = async (req, res) => {
             return res.status(404).json({ success: false, message: "No users found" });
         }
         return res.status(200).json({ success: true, message: "Users found", allPhoto });
+    } catch (error) {
+        console.error("Error fetching users:", error);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+
+
+
+
+
+
+
+
+
+
+// *******************announcement api*******************
+
+
+exports.announcementUpload = async (req, res) => {
+    try {
+        const { title } = req.body;
+        const file = req.files && req.files.image ? req.files.image : null;
+
+        if (!file) {
+            return res.status(400).json({ success: false, message: "No file uploaded" });
+        }
+
+        const fileType = file.name.split('.').pop().toLowerCase();
+        if (!isFileSupported(fileType)) {
+            return res.status(400).json({ success: false, message: 'File format is not supported' });
+        }
+
+        const response = await uploadFileToCloudinary(file, 'userImage', 30);
+        if (!response.secure_url) {
+            return res.status(500).json({ success: false, message: "Failed to upload image" });
+        }
+
+        const fileData = await announceUploadModal.create({title, image: response.secure_url });
+
+        return res.status(201).json({ success: true, message: 'Announcement uploaded successfully', fileData });
+    } catch (error) {
+        console.error("Error while uploading file:", error);
+        return res.status(500).json({ success: false, message: `Error while uploading file: ${error.message}` });
+    }
+};
+
+
+
+
+
+exports.getAllAnnouncement = async (req, res) => {
+    try {
+        const allAnnouncement = await announceUploadModal.find({});
+        if (!allAnnouncement.length) {
+            return res.status(404).json({ success: false, message: "No Announcement found" });
+        }
+        return res.status(200).json({ success: true, message: "Announcement found", allAnnouncement });
     } catch (error) {
         console.error("Error fetching users:", error);
         return res.status(500).json({ success: false, message: "Internal Server Error" });
