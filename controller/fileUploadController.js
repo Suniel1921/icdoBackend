@@ -252,13 +252,10 @@ exports.totalUsers = async (req, res) => {
 
 
 
-
-
 // *************************gallery photo uploader**********************************
 
 exports.galleryUpload = async (req, res) => {
     try {
-        
         const file = req.files && req.files.image ? req.files.image : null;
 
         if (!file) {
@@ -277,43 +274,41 @@ exports.galleryUpload = async (req, res) => {
 
         const fileData = await galleryUploadModal.create({image: response.secure_url });
 
-        return res.status(201).json({ success: true, message: 'image uploaded successfully', fileData });
+        return res.status(201).json({ success: true, message: 'Image uploaded successfully', fileData });
     } catch (error) {
         console.error("Error while uploading file:", error);
         return res.status(500).json({ success: false, message: `Error while uploading file: ${error.message}` });
     }
 };
 
-
-
-
-
-
 exports.getAllGalleryPhoto = async (req, res) => {
     try {
         const allPhoto = await galleryUploadModal.find({});
         if (!allPhoto.length) {
-            return res.status(404).json({ success: false, message: "No users found" });
+            return res.status(404).json({ success: false, message: "No photos found" });
         }
-        return res.status(200).json({ success: true, message: "Users found", allPhoto });
+        return res.status(200).json({ success: true, message: "Photos found", allPhoto });
     } catch (error) {
-        console.error("Error fetching users:", error);
+        console.error("Error fetching photos:", error);
         return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
 
-
-
-
-
-
-
-
-
-
+exports.deleteGalleryPhoto = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const photo = await galleryUploadModal.findByIdAndDelete(id);
+        if (!photo) {
+            return res.status(404).json({ success: false, message: "Photo not found" });
+        }
+        return res.status(200).json({ success: true, message: "Photo deleted successfully" });
+    } catch (error) {
+        console.error("Error deleting photo:", error);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
 
 // *******************announcement api*******************
-
 
 exports.announcementUpload = async (req, res) => {
     try {
@@ -334,7 +329,7 @@ exports.announcementUpload = async (req, res) => {
             return res.status(500).json({ success: false, message: "Failed to upload image" });
         }
 
-        const fileData = await announceUploadModal.create({title, image: response.secure_url });
+        const fileData = await announceUploadModal.create({ title, image: response.secure_url });
 
         return res.status(201).json({ success: true, message: 'Announcement uploaded successfully', fileData });
     } catch (error) {
@@ -343,19 +338,29 @@ exports.announcementUpload = async (req, res) => {
     }
 };
 
-
-
-
-
 exports.getAllAnnouncement = async (req, res) => {
     try {
         const allAnnouncement = await announceUploadModal.find({});
         if (!allAnnouncement.length) {
-            return res.status(404).json({ success: false, message: "No Announcement found" });
+            return res.status(404).json({ success: false, message: "No announcements found" });
         }
-        return res.status(200).json({ success: true, message: "Announcement found", allAnnouncement });
+        return res.status(200).json({ success: true, message: "Announcements found", allAnnouncement });
     } catch (error) {
-        console.error("Error fetching users:", error);
+        console.error("Error fetching announcements:", error);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+exports.deleteAnnouncement = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const announcement = await announceUploadModal.findByIdAndDelete(id);
+        if (!announcement) {
+            return res.status(404).json({ success: false, message: "Announcement not found" });
+        }
+        return res.status(200).json({ success: true, message: "Announcement deleted successfully" });
+    } catch (error) {
+        console.error("Error deleting announcement:", error);
         return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
